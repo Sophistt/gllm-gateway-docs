@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
+export default withMermaid(defineConfig({
   title: 'gllm-gateway',
   description: 'LLM API 网关文档',
   base: '/gllm-gateway-docs/',
@@ -37,4 +38,4 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/Sophistt/gllm-gateway-docs' },
     ],
   },
-})
+}))

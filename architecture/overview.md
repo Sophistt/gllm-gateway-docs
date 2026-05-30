@@ -2,35 +2,30 @@
 
 ## 系统架构
 
-```
-客户端
-  │
-  ▼
-┌─────────────────────────────────────────┐
-│              gllm-gateway               │
-│                                         │
-│  ┌──────────┐    ┌────────────────────┐ │
-│  │ 用户 API  │    │    管理员 API       │ │
-│  │ /v1/*    │    │    /admin/*        │ │
-│  └────┬─────┘    └────────┬───────────┘ │
-│       │ API Key 认证       │ JWT 认证    │
-│       ▼                   ▼             │
-│  ┌──────────┐    ┌────────────────────┐ │
-│  │ 配额检查  │    │   用户/Key/配额管理  │ │
-│  │ (Redis)  │    │                    │ │
-│  └────┬─────┘    └────────────────────┘ │
-│       │                                 │
-│       ▼                                 │
-│  ┌──────────────────────┐               │
-│  │      代理路由         │               │
-│  │  claude* → Anthropic │               │
-│  │  其他   → OpenAI     │               │
-│  └────┬─────────────────┘               │
-│       │ 用量记录 (PostgreSQL)            │
-└───────┼─────────────────────────────────┘
-        │
-        ├──► OpenAI API
-        └──► Anthropic API
+```mermaid
+flowchart TD
+    Client["客户端"]
+
+    subgraph GW["gllm-gateway"]
+        UserAPI["用户 API\n/v1/*"]
+        AdminAPI["管理员 API\n/admin/*"]
+        QuotaCheck["配额检查\nRedis"]
+        AdminMgmt["用户/Key/配额管理"]
+        ProxyRouter["代理路由\nclaude* → Anthropic\n其他 → OpenAI"]
+    end
+
+    UsageDB[("用量记录\nPostgreSQL")]
+    OpenAI["OpenAI API"]
+    Anthropic["Anthropic API"]
+
+    Client --> UserAPI
+    Client --> AdminAPI
+    UserAPI -- "API Key 认证" --> QuotaCheck
+    AdminAPI -- "JWT 认证" --> AdminMgmt
+    QuotaCheck --> ProxyRouter
+    ProxyRouter -- "异步写入" --> UsageDB
+    ProxyRouter --> OpenAI
+    ProxyRouter --> Anthropic
 ```
 
 ## 数据流
